@@ -1,0 +1,37 @@
+# 기본(운영·Render) 프로필 — 실제 값은 전부 환경변수로 주입한다 (키·비밀번호 커밋 금지)
+# 로컬 개발은 application-local.yml 참고: gradlew bootRun --args='--spring.profiles.active=local'
+spring:
+  application:
+    name: skinroutine-backend
+  datasource:
+    # Supabase는 반드시 "Session pooler" 주소를 쓸 것 (README 배포 섹션 참고)
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/postgres}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 12MB
+
+server:
+  port: ${PORT:8080}   # Render가 PORT를 넣어준다
+
+app:
+  openai:
+    api-key: ${OPENAI_API_KEY:}          # 비어 있으면 자동으로 룰 기반 폴백 동작
+    model: ${OPENAI_MODEL:gpt-4o-mini}   # 품질 부족 시 gpt-4o로 승격
+    base-url: ${OPENAI_BASE_URL:https://api.openai.com/v1}
+  supabase:
+    url: ${SUPABASE_URL:}
+    service-key: ${SUPABASE_SERVICE_KEY:}
+    bucket: ${SUPABASE_BUCKET:photos}    # Public 버킷으로 만들 것
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:*}   # 제출 전 프론트 도메인으로 좁히기
+  storage:
+    local-dir: ./local-uploads           # local 프로필에서만 사용
+  demo:
+    photo-url: ${DEMO_PHOTO_URL:}        # 데모 시드 기록에 넣을 대표 사진 URL (비우면 사진 없음)

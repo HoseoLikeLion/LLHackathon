@@ -1,0 +1,18 @@
+# 로컬 개발 프로필 — 외부 서비스(OpenAI 키·Supabase) 없이 바로 실행된다
+#   실행:   gradlew bootRun --args='--spring.profiles.active=local'
+#   DB:     H2 인메모리 (서버 끄면 초기화) → 웹 콘솔 http://localhost:8080/h2-console
+#           (JDBC URL: jdbc:h2:mem:skinroutine / 사용자 sa / 비밀번호 없음)
+#   사진:   ./local-uploads 폴더에 저장, http://localhost:8080/local-photos/** 로 서빙
+#   AI:     OPENAI_API_KEY가 없으면 자동으로 룰 기반 폴백 루틴 응답 (isFallback: true)
+spring:
+  datasource:
+    url: jdbc:h2:mem:skinroutine;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+  h2:
+    console:
+      enabled: true
