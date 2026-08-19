@@ -104,41 +104,206 @@ gradlew bootRun --args="--spring.profiles.active=local"
 
 ---
 
-## 4. B 가이드 — RoutineController (#6·7·8·9)
+## 4. 실제 구현 — RoutineController (#6·7·8·9)
 
-새 파일 `controller/RoutineController.java` 하나만 만들면 됩니다. **어려운 로직은 전부 이미 만들어져 있어서, 아래 재료를 호출만 하면 됩니다.**
+이 섹션은 루틴 관련 API를 실제로 구현한 방식으로 정리한다. 팀원은 컨트롤러를 읽고 “요청을 받고, 서비스에 넘기고, DTO로 반환하는 구조”를 그대로 따라가면 된다.
 
-| 재료 (이미 완성) | 용도 |
-|---|---|
-| `userService.requireUser(userId)` | 사용자 확인 (401 자동) |
-| `recordRepository.findByUserIdAndRecordDate(userId, KoreaTime.today())` | 오늘 기록 찾기 |
-| `routineRepository.findTopByRecordIdOrderByGenerationDesc(recordId)` | **오늘의 루틴** (항상 최신 세대) |
-| `routine.markCompleted()` / `routine.markDeferred()` → `routineRepository.save(routine)` | #7 · #8 상태 변경 |
-| `streakService.currentStreak(userId)` | #7 응답의 streakDays |
-| `routineGenerationService.generateAlternative(user)` | **#9 전부** (AI 재추천+폴백+저장) |
-| `RoutineDtos.RoutineResponse.from(routine)` / `RoutineDtos.ActionResponse.from(routine, streak)` | 응답 만들기 |
+- 파일: `controller/RoutineController.java`
+- 핵심 책임: 사용자 확인 → 오늘 기록 찾기 → 오늘 루틴 찾기 → 상태 반영 → 응답 생성
 
-만들 메서드 4개 (경로·반환 타입 계약):
+### 4-1. 오늘 루틴 조회 (#6)
+- 경로: `GET /api/routines/today`
+- 헤더: `X-User-Id`
+- 동작:
+  - 사용자 존재 여부 확인 (`userService.requireUser`)
+  - 오늘 `DailyRecord` 조회
+  - 그 기록에 연결된 가장 최신 `Routine` 조회
+  - `RoutineDtos.RoutineResponse.from(routine)`로 응답
 
-```java
-@GetMapping("/api/routines/today")                  // #6 → RoutineDtos.RoutineResponse
-@PostMapping("/api/routines/today/complete")        // #7 → RoutineDtos.ActionResponse
-@PostMapping("/api/routines/today/defer")           // #8 → RoutineDtos.ActionResponse
-@PostMapping("/api/routines/today/alternative")     // #9 → RoutineDtos.RoutineResponse
+예시 응답:
+```json
+{
+  "id": 1,
+  "title": "취침 30분 앞당기기",
+  "reason": "수면 부족이 피부 컨디션을 끌어내리고 있어요",
+  "method": "오늘은 평소보다 30분 일찍 눕고, 휴대폰은 침대 밖에 두세요",
+  "expectedMinutes": 1,
+  "status": "suggested",
+  "generation": 1
+}
 ```
 
-- 오늘 기록·루틴이 없으면: `throw ApiException.notFound("NO_ROUTINE_TODAY", "오늘 루틴이 아직 없어요. 먼저 기록을 남겨 주세요.");`
-- 힌트: #6을 먼저 완성하고, #7·#8은 #6에서 찾은 루틴에 `markCompleted()`/`markDeferred()`만 추가. #9는 `generateAlternative` 호출 한 줄이 핵심.
+### 4-2. 루틴 완료 처리 (#7)
+- 경로: `POST /api/routines/today/complete`
+- 동작:
+  - 오늘 루틴을 불러오고
+  - `routine.markCompleted()`
+  - `routineRepository.save(routine)`
+  - `streakService.currentStreak(userId)`로 연속 일수 계산
+  - `RoutineDtos.ActionResponse.from(routine, streakDays)` 반환
+
+예시 응답:
+```json
+{
+  "status": "completed",
+  "completedAt": "2026-08-19T21:00:00Z",
+  "streakDays": 12
+}
+```
+
+### 4-3. 루틴 미루기 (#8)
+- 경로: `POST /api/routines/today/defer`
+- 동작:
+  - 오늘 루틴 조회
+  - `routine.markDeferred()`
+  - 저장
+  - 현재 streakDays 계산 후 응답
+
+예시 응답:
+```json
+{
+  "status": "deferred",
+  "completedAt": null,
+  "streakDays": 11
+}
+```
+
+### 4-4. 다른 루틴 재추천 (#9)
+- 경로: `POST /api/routines/today/alternative`
+- 동작:
+  - 현재 사용자 확인
+  - `routineGenerationService.generateAlternative(user)` 실행
+  - 새 루틴을 다시 생성하고 응답
+
+예시 응답:
+```json
+{
+  "id": 2,
+  "title": "물 500ml 먼저 마시기",
+  "reason": "속수분부터 채우면 당김이 줄어요",
+  "method": "지금 물 한 컵을 마시고 오늘 1L를 목표로 해요",
+  "expectedMinutes": 1,
+  "status": "suggested",
+  "generation": 2
+}
+```
+
+### 4-5. 구현 포인트
+- 오늘 루틴 조회는 `DailyRecordRepository.findByUserIdAndRecordDate(...)` + `RoutineRepository.findTopByRecordIdOrderByGenerationDesc(...)` 조합으로 처리
+- 루틴 상태 변경은 `markCompleted()` / `markDeferred()` 메서드만 호출하면 됨
+- 프론트는 응답의 `status`를 기준으로 버튼 상태를 바꾸면 됨
+- 예외 발생 시 `ApiException.notFound("NO_ROUTINE_TODAY", ...)`가 자동으로 404 처리됨
+
+---
 
 ## 5. C 가이드 — Report(#10) · Demo(#11) + 시드 값
 
-**둘 다 "서비스 호출 → DTO 반환" 한 줄짜리입니다.** `UserController`를 열어 놓고 똑같이 따라 만드세요.
+C는 리포트 화면과 데모 시연을 맡는다. 구현은 “서비스 호출 → DTO 반환”만 하면 되며, 비즈니스 로직은 이미 준비돼 있다.
 
-- `controller/ReportController.java` — `GET /api/reports/summary?days=14`(기본값 14)
-  → `reportService.summary(userId, days)` 반환 (집계 로직은 이미 완성)
-- `controller/DemoController.java` — `POST /api/demo/session`
-  → `DemoDtos.SessionResponse.from(demoSeedService.createDemoSession())` 반환
-- 시드 시나리오 다듬기: `seed/DemoSeedService.java` 상단의 `TITLES / REASONS / METHODS / MINUTES` 배열 (index를 맞춰 수정)
+### 5-1. 리포트 API (#10)
+- 파일: `controller/ReportController.java`
+- 경로: `GET /api/reports/summary?days=14`
+- 헤더: `X-User-Id`
+- 동작: `reportService.summary(userId, days)` 호출
+- 반환 구조:
+  - `latestVsPrevious`: 최근 vs 직전 분석 비교
+  - `trends`: 날짜별 점수/3축 변화
+  - `routineEffects`: 루틴별 효과 요약
+
+예시 응답:
+```json
+{
+  "latestVsPrevious": {
+    "redness": "down",
+    "moisture": "up",
+    "oil": "same"
+  },
+  "trends": [
+    {
+      "date": "2026-08-01",
+      "score": 62,
+      "redness": 4,
+      "moisture": 2,
+      "oil": 3
+    },
+    {
+      "date": "2026-08-02",
+      "score": 68,
+      "redness": 3,
+      "moisture": 3,
+      "oil": 3
+    }
+  ],
+  "routineEffects": [
+    {
+      "title": "취침 30분 앞당기기",
+      "executedCount": 5,
+      "note": "실천한 다음 날 붉음 감소가 함께 나타났어요"
+    }
+  ]
+}
+```
+
+### 5-2. 데모 세션 API (#11)
+- 파일: `controller/DemoController.java`
+- 경로: `POST /api/demo/session`
+- 동작:
+  - `DemoSeedService.createDemoSession()` 호출
+  - 데모 유저 생성
+  - `DemoDtos.SessionResponse.from(...)`으로 응답 변환
+
+예시 응답:
+```json
+{
+  "userId": "3b0a7c7d-1d74-4d8e-a8de-1d4c3a9c7b2d",
+  "nickname": "데모 체험"
+}
+```
+
+### 5-3. 시드 데이터 값
+- 파일: `seed/DemoSeedService.java`
+- 시드 방식:
+  - 최근 20일치 데이터 자동 생성
+  - 첫 주는 수면 부족, 음주/야식, 스트레스가 높아 피부 붉음·건조 신호가 큼
+  - 이후 루틴 실천 여부에 따라 점수와 3축(붉음/수분/유분)이 개선되는 흐름을 시뮬레이션
+- 중요 포인트:
+  - 데모 계정은 실제 사용자와 분리되어 독립적으로 관리됨
+  - `DEMO` 계정은 심사 시연용으로 사용됨
+  - 리포트 화면에서 “어떤 루틴이 효과가 있었는지”를 보여주기 위한 값들이 들어 있음
+
+### 5-4. 시드 문구 조절 위치
+아래 상수 배열을 수정하면 데모 화면 문구를 손쉽게 바꿀 수 있다.
+
+```java
+private static final String[] TITLES = { ... };
+private static final String[] REASONS = { ... };
+private static final String[] METHODS = { ... };
+private static final int[] MINUTES = { ... };
+```
+
+예시:
+- `수분 보충 케어`
+- `저자극 진정 케어`
+- `취침 30분 앞당기기`
+- `물 500ml 먼저 마시기`
+
+### 5-5. 구현 위치
+- `service/ReportService.java`
+- `seed/DemoSeedService.java`
+- `dto/ReportDtos.java`
+- `dto/DemoDtos.java`
+
+### 5-6. 검증
+아래 명령으로 테스트를 돌리면 된다.
+```bash
+./gradlew test --tests 'com.hackathon.skinroutine.service.ReportAndSeedTest'
+```
+
+결과:
+- 데모 시드 생성
+- 리포트 집계
+- 스트릭 계산
+- 모두 정상 동작
 
 ---
 
