@@ -10,7 +10,7 @@
 
 ---
 
-## 1. 처음 실행하기 (B·C의 첫 과제)
+## 1. 처음 실행하기 (팀원 공통)
 
 준비물: **JDK 17 이상** (없으면 [Adoptium Temurin 17](https://adoptium.net) 설치. IntelliJ가 있으면 File > Project Structure에서 다운로드 가능)
 
@@ -34,26 +34,26 @@ gradlew bootRun --args="--spring.profiles.active=local"
 | 사진 | `./local-uploads` 폴더 저장 + `http://localhost:8080/local-photos/**` 로 서빙 |
 | AI | `OPENAI_API_KEY` 없으면 자동으로 **룰 기반 폴백 루틴** 응답 (`isFallback: true`) — 에러 아니고 정상 동작 |
 
-테스트 실행: `gradlew test` (18개 — 전부 통과 상태로 유지할 것)
+테스트 실행: `gradlew test` (**29개 — 전부 통과 상태로 유지할 것**. 기능을 추가하면 테스트도 같이 추가)
 
 ---
 
-## 2. API 12개 계약 (구현 현황 · 담당)
+## 2. API 12개 계약 (✅ 12개 전부 구현 완료)
 
 | # | 메서드·경로 | 하는 일 | 상태 | 담당 |
 |---|---|---|---|---|
-| 1 | `POST /api/users` | 익명 ID 발급 `{nickname?}` → `{userId}` | ✅ 완성 (견본) | C 참고용 |
-| 2 | `GET /api/users/me/home` | 홈: `{nickname, todayRecorded, streakDays}` | ✅ 완성 (견본) | C 참고용 |
-| 3 | `POST /api/records` | ⭐ 사진+상태 → 저장→분석→루틴 한 번에 (5~10초) | ✅ 완성 | A |
-| 4 | `GET /api/records/today` | 오늘 결과 재조회 (없으면 404) | ✅ 완성 | A |
-| 5 | `GET /api/records?limit=30` | 기록 이력 `{"records":[...]}` | ✅ 완성 | A |
-| 6 | `GET /api/routines/today` | 오늘 루틴 상세 | 🔲 **B가 구현** | B |
-| 7 | `POST /api/routines/today/complete` | 완료 체크 → `{status, completedAt, streakDays}` | 🔲 **B가 구현** | B |
-| 8 | `POST /api/routines/today/defer` | "나중에 할게요" | 🔲 **B가 구현** | B |
-| 9 | `POST /api/routines/today/alternative` | 다른 루틴 재추천 (로직은 A가 만들어 둠) | 🔲 **B가 구현** | B |
-| 10 | `GET /api/reports/summary?days=14` | 변화 리포트 (집계는 A가 만들어 둠) | 🔲 **C가 구현** | C |
-| 11 | `POST /api/demo/session` | 심사용 데모 계정 (시드는 A가 만들어 둠) | 🔲 **C가 구현** | C |
-| 12 | `GET /api/health` | 헬스체크 `{"ok":true}` | ✅ 완성 (견본) | C 참고용 |
+| 1 | `POST /api/users` | 익명 ID 발급 `{nickname?}` → `{userId}` | ✅ | 김동건 |
+| 2 | `GET /api/users/me/home` | 홈: `{nickname, todayRecorded, streakDays}` | ✅ | 김동건 |
+| 3 | `POST /api/records` | ⭐ 사진+상태 → 저장→분석→루틴 한 번에 (5~10초) | ✅ | 김동건 |
+| 4 | `GET /api/records/today` | 오늘 결과 재조회 (없으면 404) | ✅ | 김동건 |
+| 5 | `GET /api/records?limit=30` | 기록 이력 `{"records":[...]}` | ✅ | 김동건 |
+| 6 | `GET /api/routines/today` | 오늘 루틴 상세 (항상 최신 generation) | ✅ | 고륜 |
+| 7 | `POST /api/routines/today/complete` | 완료 체크 → `{status, completedAt, streakDays}` | ✅ | 고륜 |
+| 8 | `POST /api/routines/today/defer` | "나중에 할게요" | ✅ | 고륜 |
+| 9 | `POST /api/routines/today/alternative` | 다른 루틴 재추천 (generation+1) | ✅ | 고륜 |
+| 10 | `GET /api/reports/summary?days=14` | 변화 리포트 | ✅ | 고륜 |
+| 11 | `POST /api/demo/session` | 심사용 데모 계정 (20일 시드 자동 생성) | ✅ | 고륜 |
+| 12 | `GET /api/health` | 헬스체크 `{"ok":true}` (UptimeRobot 핑 대상) | ✅ | 김동건 |
 
 **에러 계약** (전부 자동 처리됨 — `GlobalExceptionHandler`):
 
@@ -91,14 +91,14 @@ gradlew bootRun --args="--spring.profiles.active=local"
 
 | 패키지 | 상태 | 내용 |
 |---|---|---|
-| `config/` | ✅ A 완성 | 설정 바인딩 · RestClient(OpenAI/Supabase) · CORS |
-| `common/` | ✅ A 완성 | KST 날짜(`KoreaTime`) · 예외(`ApiException`) · 에러 변환기 |
-| `domain/` | ✅ A 완성 | 엔티티 4개: User · DailyRecord · Analysis · Routine |
-| `repository/` | ✅ A 완성 | 쿼리 메서드까지 준비됨 (B·C는 호출만) |
-| `dto/` | ✅ A 완성 | 응답 계약 그대로 — B·C는 `from(...)` 팩토리만 쓰면 됨 |
-| `service/` | ✅ A 완성 | 파이프라인 · AI · 폴백 · 스트릭 · 리포트 집계 전부 |
-| `controller/` | 절반 | Health·User·Record ✅ / **Routine = B** / **Report·Demo = C** |
-| `seed/` | 틀 완성 | `DemoSeedService` — **시나리오 값 다듬기 = C** |
+| `config/` | ✅ 완성 | 설정 바인딩 · RestClient(OpenAI/Supabase) · CORS |
+| `common/` | ✅ 완성 | KST 날짜(`KoreaTime`) · 예외(`ApiException`) · 에러 변환기 |
+| `domain/` | ✅ 완성 | 엔티티 4개: User · DailyRecord · Analysis · Routine |
+| `repository/` | ✅ 완성 | 쿼리 메서드 완비 |
+| `dto/` | ✅ 완성 | 응답 계약 그대로 — `from(...)` 팩토리 사용 |
+| `service/` | ✅ 완성 | 파이프라인 · AI · 폴백 · 스트릭 · 리포트 집계 전부 |
+| `controller/` | ✅ 완성 | Health·User·Record(김동건) · Routine·Report·Demo(고륜) |
+| `seed/` | ✅ 완성 | `DemoSeedService` — 데모 계정 + 20일 시드 (문구는 상단 배열에서 조절) |
 
 컨트롤러 읽는 순서(쉬움→어려움): `HealthController` → `UserController` → `RecordController`
 
@@ -196,9 +196,9 @@ gradlew bootRun --args="--spring.profiles.active=local"
 
 ---
 
-## 5. C 가이드 — Report(#10) · Demo(#11) + 시드 값
+## 5. 실제 구현 — Report(#10) · Demo(#11) + 시드 값
 
-C는 리포트 화면과 데모 시연을 맡는다. 구현은 “서비스 호출 → DTO 반환”만 하면 되며, 비즈니스 로직은 이미 준비돼 있다.
+리포트 화면과 데모 시연용 API. 구현은 “서비스 호출 → DTO 반환”이고, 집계·시드 로직은 service·seed 패키지에 있다.
 
 ### 5-1. 리포트 API (#10)
 - 파일: `controller/ReportController.java`

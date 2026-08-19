@@ -86,6 +86,12 @@ public class DemoSeedService {
             int redness = clamp(4 - i / 6, 1, 5);   // 4 → 1 로 개선
             int moisture = clamp(2 + i / 6, 1, 5);  // 2 → 5 로 개선
             int oil = (i % 7 == 0) ? 4 : 3;
+            if (i == SEED_DAYS - 2) {
+                // 마지막 날 직전은 한 단계 나쁘게 둔다 —
+                // ⑤ 리포트의 "최근 vs 직전" 비교가 '붉음 감소·수분 상승'으로 보이게 하는 시연 장치
+                redness = clamp(redness + 1, 1, 5);
+                moisture = clamp(moisture - 1, 1, 5);
+            }
             int score = Math.min(92, clamp(58 + i * 2 - (redness - 2) * 3 + (moisture - 3) * 2, 0, 100));
 
             List<String> labels = earlyPhase ? List.of("붉음 주의", "수분 부족")
