@@ -8,6 +8,15 @@
 - 서버는 **1개**, 로그인 없음 — 서버가 발급한 ID를 `X-User-Id` 헤더로 보낸다
 - 상세 설계 문서: 팀 공유 `05_API_설계.md` / `06_API_설계_요약.md`
 
+## 🚀 배포 주소 (2026-08-20 배포 완료)
+
+**https://llhackathon.onrender.com**
+
+- 상태 확인: https://llhackathon.onrender.com/api/health → `{"ok":true}`
+- 심사·시연용 체험 계정: `POST https://llhackathon.onrender.com/api/demo/session` (20일치 데이터가 채워진 userId 발급)
+- 인프라: Render(Docker) + Supabase(Postgres 17 · Storage) + OpenAI gpt-4o-mini
+- ⚠️ 프론트 주의: `POST /api/records`는 AI 분석 때문에 **10~15초** 걸립니다. 로딩 화면 필수.
+
 ---
 
 ## 1. 처음 실행하기 (팀원 공통)
