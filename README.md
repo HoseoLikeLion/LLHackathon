@@ -8,14 +8,27 @@
 - 서버는 **1개**, 로그인 없음 — 서버가 발급한 ID를 `X-User-Id` 헤더로 보낸다
 - 상세 설계 문서: 팀 공유 `05_API_설계.md` / `06_API_설계_요약.md`
 
-## 🚀 배포 주소 (2026-08-20 배포 완료)
+## 🚀 배포 주소 — 이 URL 하나로 화면 + API 전부 (2026-08-21)
 
 **https://llhackathon.onrender.com**
 
+- 루트(`/`) = SkinAI 웹 화면 · `/api/**` = REST API (서버 1개, 단일 URL)
 - 상태 확인: https://llhackathon.onrender.com/api/health → `{"ok":true}`
-- 심사·시연용 체험 계정: `POST https://llhackathon.onrender.com/api/demo/session` (20일치 데이터가 채워진 userId 발급)
-- 인프라: Render(Docker) + Supabase(Postgres 17 · Storage) + OpenAI gpt-4o-mini
-- ⚠️ 프론트 주의: `POST /api/records`는 AI 분석 때문에 **10~15초** 걸립니다. 로딩 화면 필수.
+- 심사·시연: 홈의 **"데모 데이터로 리포트 보기"** 버튼 = 20일치 데이터 계정 즉시 발급
+- 인프라: Render(Docker) + Supabase(Postgres 17 · Storage) + OpenAI gpt-4o-mini + UptimeRobot(슬립 방지)
+- ⚠️ `POST /api/records`는 AI 분석 때문에 **10~15초** 걸립니다 (로딩 UI 있음)
+
+### 프론트 수정 시 배포 반영 방법 (중요)
+
+배포되는 화면은 `src/main/resources/static`에 커밋된 빌드 산출물입니다. `frontend/`만 고치면 배포에 반영되지 않습니다:
+
+```bash
+cd frontend
+npm run build
+cp -r dist/* ../src/main/resources/static/   # Windows: xcopy /E /Y dist\* ..\src\main\resources\static\
+git add ../src/main/resources/static
+git commit -m "chore: 프론트 빌드 반영" && git push   # → Render 자동 배포
+```
 
 ---
 
