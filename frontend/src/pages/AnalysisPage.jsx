@@ -1,13 +1,11 @@
 import { Lightbulb, Sparkles } from "lucide-react";
-import { useState } from "react";
 import Button from "../components/Button";
 import Card from "../components/Card";
 import Header from "../components/Header";
 import RoutineCard from "../components/RoutineCard";
 import StatusCard from "../components/StatusCard";
 
-export default function AnalysisPage({ analysis, onBack, onNavigate }) {
-  const [notice, setNotice] = useState(false);
+export default function AnalysisPage({ analysis, error, isChangingRoutine, onBack, onNavigate, onAlternative }) {
 
   return (
     <>
@@ -16,7 +14,7 @@ export default function AnalysisPage({ analysis, onBack, onNavigate }) {
         <Card className="condition-card">
           <p>{analysis.conditionLabel}</p>
           <strong>{analysis.condition}</strong>
-          <div className="score-ring" aria-label={`피부 컨디션 ${analysis.score}점`}>
+          <div className="score-ring" style={{ "--score": `${analysis.score}%` }} aria-label={`피부 컨디션 ${analysis.score}점`}>
             <span>{analysis.score}</span>
             <small>/100</small>
           </div>
@@ -41,15 +39,12 @@ export default function AnalysisPage({ analysis, onBack, onNavigate }) {
             <Sparkles size={18} />
             오늘 이 루틴 실천하기
           </Button>
-          <Button variant="secondary" onClick={() => setNotice(true)}>
-            다른 루틴 보기
+          <Button variant="secondary" disabled={isChangingRoutine} onClick={onAlternative}>
+            {isChangingRoutine ? "다른 루틴을 찾는 중..." : "다른 루틴 보기"}
           </Button>
-          {notice ? (
-            <p className="inline-notice">MVP에서는 오늘 가장 필요한 루틴 1개만 보여드려요.</p>
-          ) : null}
+          {error}
         </div>
       </main>
     </>
   );
 }
-

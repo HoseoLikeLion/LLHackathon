@@ -8,18 +8,17 @@ export default function SkinStatusSelector({ title, icon, options, value, onChan
       <div className="selector-card__options" role="radiogroup" aria-label={title}>
         {options.map((option) => (
           <button
-            key={option}
-            className={`choice-button${value === option ? " is-selected" : ""}`}
+            key={option.label}
+            className={`choice-button${value === option.value ? " is-selected" : ""}`}
             type="button"
             role="radio"
             aria-checked={value === option}
-            onClick={() => onChange(option)}
+            onClick={() => onChange(option.value)}
           >
-            {option}
+            {option.label}
           </button>
         ))}
       </div>
     </section>
   );
 }
-

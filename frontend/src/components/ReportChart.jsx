@@ -1,17 +1,37 @@
-export default function ReportChart() {
+function pointsFor(trends, key) {
+  if (trends.length < 2) return "";
+  const values = trends.map((item) => item[key]);
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const range = max - min || 1;
+  return trends
+    .map((item, index) => {
+      const x = 22 + (254 * index) / (trends.length - 1);
+      const y = 116 - ((item[key] - min) / range) * 72;
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    })
+    .join(" ");
+}
+
+export default function ReportChart({ trends }) {
+  const rednessPoints = pointsFor(trends, "redness");
+  const moisturePoints = pointsFor(trends, "moisture");
+
   return (
     <div className="report-chart" aria-label="최근 피부 변화 그래프">
       <svg viewBox="0 0 300 150" role="img">
-        <title>붉음은 낮아지고 수분은 개선되는 추이</title>
+        <title>서버에서 불러온 최근 피부 변화 추이</title>
         <path className="chart-grid" d="M20 120H280" />
-        <path className="chart-line chart-line--red" d="M22 98 C70 84 106 82 144 72 S218 44 276 64" />
-        <path className="chart-line chart-line--blue" d="M22 116 C66 42 104 78 144 84 S222 126 276 56" />
-        <circle className="chart-dot chart-dot--red" cx="22" cy="98" r="4" />
-        <circle className="chart-dot chart-dot--red" cx="144" cy="72" r="4" />
-        <circle className="chart-dot chart-dot--red" cx="276" cy="64" r="4" />
-        <circle className="chart-dot chart-dot--blue" cx="22" cy="116" r="4" />
-        <circle className="chart-dot chart-dot--blue" cx="144" cy="84" r="4" />
-        <circle className="chart-dot chart-dot--blue" cx="276" cy="56" r="4" />
+        <polyline className="chart-line chart-line--red" points={rednessPoints} />
+        <polyline className="chart-line chart-line--blue" points={moisturePoints} />
+        {rednessPoints.split(" ").filter(Boolean).map((point) => {
+          const [cx, cy] = point.split(",");
+          return <circle key={`red-${point}`} className="chart-dot chart-dot--red" cx={cx} cy={cy} r="4" />;
+        })}
+        {moisturePoints.split(" ").filter(Boolean).map((point) => {
+          const [cx, cy] = point.split(",");
+          return <circle key={`blue-${point}`} className="chart-dot chart-dot--blue" cx={cx} cy={cy} r="4" />;
+        })}
       </svg>
       <div className="chart-legend">
         <span>
@@ -26,4 +46,3 @@ export default function ReportChart() {
     </div>
   );
 }
-
