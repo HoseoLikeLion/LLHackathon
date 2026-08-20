@@ -2,8 +2,8 @@
 # 구조: 프론트(Vite) 빌드 → 산출물을 Spring static/ 에 넣어 한 서버가 화면+API를 모두 서빙
 #       → 배포 URL 하나(https://…onrender.com)로 제출 요건 충족
 
-# 0단계: 프론트엔드 빌드
-FROM node:20-alpine AS fe
+# 0단계: 프론트엔드 빌드 (alpine 금지 — rollup 네이티브 모듈이 musl용을 못 찾는 이슈)
+FROM node:20 AS fe
 WORKDIR /fe
 COPY frontend/package.json frontend/package-lock.json ./
 RUN npm ci --no-audit --no-fund
