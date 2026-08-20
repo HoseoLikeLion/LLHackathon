@@ -8,6 +8,7 @@ import { recordOptions } from "../data/recordOptions";
 export default function SkinRecordPage({
   record,
   isAnalyzing,
+  error,
   onBack,
   onPhotoChange,
   onRecordChange,
