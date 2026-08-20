@@ -3,7 +3,7 @@ import Button from "../components/Button";
 import Header from "../components/Header";
 import PhotoUploader from "../components/PhotoUploader";
 import SkinStatusSelector from "../components/SkinStatusSelector";
-import { recordOptions } from "../data/recordOptions";
+import { statusOptions } from "../data/mockData";
 
 export default function SkinRecordPage({
   record,
@@ -13,7 +13,7 @@ export default function SkinRecordPage({
   onRecordChange,
   onAnalyze,
 }) {
-  const canAnalyze = Boolean(record.photo && record.sleepHours !== null && record.hadDrinkOrSnack !== null && record.stressLevel !== null);
+  const canAnalyze = Boolean(record.photoPreview && record.redness && record.moisture && record.oiliness);
 
   return (
     <>
@@ -29,36 +29,36 @@ export default function SkinRecordPage({
         <section className="record-section">
           <h2>현재 피부 상태 체크</h2>
           <SkinStatusSelector
-            title="수면 시간"
+            title="붉음 정도"
             icon={<Thermometer size={19} />}
-            options={recordOptions.sleepHours}
-            value={record.sleepHours}
+            options={statusOptions.redness}
+            value={record.redness}
             tone="red"
-            onChange={(value) => onRecordChange("sleepHours", value)}
+            onChange={(value) => onRecordChange("redness", value)}
           />
           <SkinStatusSelector
-            title="간식 또는 음주"
+            title="수분감"
             icon={<Droplet size={19} />}
-            options={recordOptions.hadDrinkOrSnack}
-            value={record.hadDrinkOrSnack}
+            options={statusOptions.moisture}
+            value={record.moisture}
             tone="blue"
-            onChange={(value) => onRecordChange("hadDrinkOrSnack", value)}
+            onChange={(value) => onRecordChange("moisture", value)}
           />
           <SkinStatusSelector
-            title="스트레스 정도"
+            title="유분감"
             icon={<Leaf size={19} />}
-            options={recordOptions.stressLevel}
-            value={record.stressLevel}
+            options={statusOptions.oiliness}
+            value={record.oiliness}
             tone="green"
-            onChange={(value) => onRecordChange("stressLevel", value)}
+            onChange={(value) => onRecordChange("oiliness", value)}
           />
         </section>
 
         <Button className="screen-cta" disabled={!canAnalyze || isAnalyzing} onClick={onAnalyze}>
           {isAnalyzing ? "AI 피부 분석 중..." : "AI 피부 분석 시작하기"}
         </Button>
-        {error ? <p className="state-message state-message--error">{error}</p> : null}
       </main>
     </>
   );
 }
+

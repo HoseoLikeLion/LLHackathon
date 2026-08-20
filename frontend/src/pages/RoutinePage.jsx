@@ -3,7 +3,7 @@ import Button from "../components/Button";
 import Card from "../components/Card";
 import Header from "../components/Header";
 
-export default function RoutinePage({ routine, error, isSaving, onBack, onComplete, onDefer }) {
+export default function RoutinePage({ routine, onBack, onNavigate }) {
   return (
     <>
       <Header showBack onBack={onBack} />
@@ -17,28 +17,33 @@ export default function RoutinePage({ routine, error, isSaving, onBack, onComple
           <div className="routine-detail-card__icon">
             <Droplet size={34} fill="currentColor" strokeWidth={1.8} />
           </div>
-          <h2>{routine.title}</h2>
+          <h2>{routine.name}</h2>
           <span className="time-pill">
             <Clock3 size={14} />
-            약 {routine.expectedMinutes}분
+            {routine.estimatedTime}
           </span>
           <p>{routine.reason}</p>
           <ol className="step-list">
-            <li><span>1</span>{routine.method}</li>
+            {routine.steps.map((step, index) => (
+              <li key={step}>
+                <span>{index + 1}</span>
+                {step}
+              </li>
+            ))}
           </ol>
         </Card>
 
         <div className="cta-stack">
-          <Button disabled={isSaving || routine.status === "completed"} onClick={onComplete}>
+          <Button onClick={() => onNavigate("complete")}>
             <CheckCircle2 size={18} />
-            {routine.status === "completed" ? "오늘 루틴 완료됨" : isSaving ? "처리 중..." : "오늘 루틴 완료하기"}
+            오늘 루틴 완료하기
           </Button>
-          <Button variant="ghost" disabled={isSaving} onClick={onDefer}>
-            {isSaving ? "처리 중..." : "나중에 실천할게요"}
+          <Button variant="ghost" onClick={() => onNavigate("home")}>
+            나중에 실천할게요
           </Button>
-          {error}
         </div>
       </main>
     </>
   );
 }
+

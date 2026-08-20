@@ -3,7 +3,7 @@ import Button from "../components/Button";
 import Card from "../components/Card";
 import Header from "../components/Header";
 
-export default function RecordCompletePage({ routine, onNavigate }) {
+export default function RecordCompletePage({ routine, isSaving, onBack, onSave, onNavigate }) {
   return (
     <>
       <Header title="오늘의 기록" showBack={false} showProfile={false} />
@@ -20,26 +20,26 @@ export default function RecordCompletePage({ routine, onNavigate }) {
             <div className="mini-icon">
               <Droplet size={20} fill="currentColor" strokeWidth={1.7} />
             </div>
-            <strong>{routine.title}</strong>
+            <strong>{routine.name}</strong>
             <span>오늘 완료</span>
           </div>
           <dl>
             <div>
               <dt>상태</dt>
-              <dd>저장 완료</dd>
+              <dd>저장 대기</dd>
             </div>
             <div>
               <dt>시간</dt>
-              <dd>{routine.completedAt ? new Intl.DateTimeFormat("ko-KR", { hour: "numeric", minute: "numeric" }).format(new Date(routine.completedAt)) : "완료"}</dd>
+              <dd>오후 10:30</dd>
             </div>
           </dl>
         </Card>
 
-        <p className="helper-copy">오늘의 실천 기록이 저장되었어요.</p>
+        <p className="helper-copy">오늘의 실천 기록이 저장됩니다.</p>
 
         <div className="cta-stack">
-          <Button onClick={() => onNavigate("report")}>
-            피부 변화 리포트 보기
+          <Button disabled={isSaving} onClick={onSave}>
+            {isSaving ? "기록 저장 중..." : "오늘 기록 저장하기"}
           </Button>
           <Button variant="ghost" onClick={() => onNavigate("home")}>
             홈으로 돌아가기
@@ -49,3 +49,4 @@ export default function RecordCompletePage({ routine, onNavigate }) {
     </>
   );
 }
+
